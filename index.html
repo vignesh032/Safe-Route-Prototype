@@ -1,0 +1,55 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeRoute Hyderabad Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="panel">
+      <h1>SafeRoute for Women</h1>
+      <p class="subtitle">Hyderabad prototype: shortest route and safer alternative using local risk hotspots.</p>
+
+      <div class="field-group">
+        <label for="from">From</label>
+        <input id="from" type="text" placeholder="e.g., Gachibowli, Hyderabad" />
+      </div>
+
+      <div class="field-group">
+        <label for="to">To</label>
+        <input id="to" type="text" placeholder="e.g., Secunderabad, Hyderabad" />
+      </div>
+
+      <button id="routeBtn" type="button">Find Routes</button>
+
+      <section class="results" id="results">
+        <h2>Route Summary</h2>
+        <div id="loading" class="muted hidden">Calculating routes...</div>
+        <div id="error" class="error hidden"></div>
+        <div id="routeCards"></div>
+      </section>
+
+      <section class="legend">
+        <h3>Legend</h3>
+        <p><span class="swatch shortest"></span>Shortest route</p>
+        <p><span class="swatch safer"></span>Safer route</p>
+        <p><span class="swatch hotspot"></span>Crime-risk hotspot</p>
+      </section>
+    </section>
+
+    <section class="map-wrap">
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="hyderabad_crime_hotspots.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
