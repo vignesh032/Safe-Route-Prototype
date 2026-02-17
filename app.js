@@ -83,22 +83,24 @@ async function onFindRoutes() {
 }
 
 async function geocodePlace(query) {
-  const fullQuery = encodeURIComponent(query + ", Hyderabad, India");
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${fullQuery}`;
-  const response = await fetch(url, {
-    headers: { "Accept-Language": "en" }
-  });
-
-  if (!response.ok) {
-    throw new Error("Location search failed. Check internet connection.");
+  const direct = parseLatLng(query);
+  if (direct) {
+    return direct;
   }
 
-  const data = await response.json();
-  if (!data.length) {
-    throw new Error("Could not find one of the locations. Try more specific Hyderabad addresses.");
+  const fullQuery = `${query}, Hyderabad, India`;
+
+  const nominatim = await geocodeNominatim(fullQuery);
+  if (nominatim) {
+    return nominatim;
   }
 
-  return [Number(data[0].lat), Number(data[0].lon)];
+  const photon = await geocodePhoton(fullQuery);
+  if (photon) {
+    return photon;
+  }
+
+  throw new Error("Could not find one of the locations. Try area names like Gachibowli or Secunderabad.");
 }
 
 async function fetchRoutes(origin, destination) {
@@ -142,7 +144,11 @@ function analyzeRoute(route, index) {
 
 function drawRoute(analyzedRoute, kind) {
   const color = kind === "shortest" ? "#e07a5f" : "#2a9d8f";
-  const latLngs = analyzedRoute.route.geometry.coordinates.map((c) => [c[1], c[0]]);
+  const coords = analyzedRoute.route?.geometry?.coordinates || [];
+  if (!coords.length) {
+    return;
+  }
+  const latLngs = coords.map((c) => [c[1], c[0]]);
 
   const line = L.polyline(latLngs, {
     color,
@@ -243,4 +249,53 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+function parseLatLng(query) {
+  const match = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (!match) {
+    return null;
+  }
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    return null;
+  }
+  return [lat, lng];
+}
+
+async function geocodeNominatim(fullQuery) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(fullQuery)}`;
+    const response = await fetch(url, { headers: { "Accept-Language": "en" } });
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    if (!data.length) {
+      return null;
+    }
+    return [Number(data[0].lat), Number(data[0].lon)];
+  } catch (_) {
+    return null;
+  }
+}
+
+async function geocodePhoton(fullQuery) {
+  try {
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(fullQuery)}&limit=1`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    const feature = data?.features?.[0];
+    if (!feature?.geometry?.coordinates) {
+      return null;
+    }
+    const [lng, lat] = feature.geometry.coordinates;
+    return [Number(lat), Number(lng)];
+  } catch (_) {
+    return null;
+  }
 }
